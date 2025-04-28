@@ -26,7 +26,7 @@ const App: React.FC = () => {
   return (
     <div className="mx-auto flex max-w-lg flex-col justify-center items-center space-y-4 p-4 min-h-svh">
       <p className="text-lg">Add event to:</p>
-      <div className="flex space-x-2">
+      <div className="flex space-x-8">
         <AddToGoogleCalendar event={event} />
         <AddToSamsungCalendar event={event} />
       </div>
