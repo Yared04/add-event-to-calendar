@@ -1,8 +1,8 @@
 // add-event-to-calendar/src/components/AddToSamsungCalendar.tsx
 import React from "react";
-// import { generateICS } from "../utils/ics";
 import { EventDetails } from "./AddToGoogleCalendar";
 import { Spin, message } from "antd";
+import { generateICS } from "../utils/ics";
 
 // Tizen Calendar types
 interface TizenCalendar {
@@ -23,6 +23,7 @@ interface CalendarEvent {
   recurrence: null;
 }
 
+// Add Telegram WebApp type definition
 declare global {
   interface Window {
     tizen?: {
@@ -34,6 +35,11 @@ declare global {
         ): void;
       };
     };
+    Telegram: {
+      WebApp: {
+        downloadFile: (blob: Blob, fileName: string) => void;
+      };
+    };
   }
 }
 
@@ -41,58 +47,30 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
   const [loading, setLoading] = React.useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const handleOpenCalendar = () => {
+  const handleDownload = () => {
     setLoading(true);
     try {
-      // Use default dates for testing
-      const defaultStartTime = "2024-03-24T21:00:00Z";
-      const defaultEndTime = "2024-03-24T22:00:00Z";
+      const icsContent = generateICS(event);
+      const blob = new Blob([icsContent], { type: "text/calendar" });
 
-      // Format date for Google Calendar URL (YYYYMMDDTHHmmssZ)
-      const formatDateForUrl = (isoString: string) => {
-        return isoString
-          .replace(/-/g, "")
-          .replace(/:/g, "")
-          .replace(/\.\d+Z$/, "Z");
-      };
-
-      // Create calendar event URL
-      const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-        event.title || "Test Event"
-      )}&dates=${formatDateForUrl(defaultStartTime)}/${formatDateForUrl(
-        defaultEndTime
-      )}&location=${encodeURIComponent(event.location || "Test Location")}`;
-
-      window.open(calendarUrl, "_blank");
+      // Use Telegram's downloadFile function
+      window.Telegram.WebApp.downloadFile(blob, "event.ics");
 
       messageApi.open({
         type: "success",
-        content: "Opening calendar...",
+        content:
+          "Calendar file downloaded. You can now import it into your calendar.",
       });
     } catch (err) {
-      console.error("Error opening calendar:", err);
+      console.error("Error downloading calendar file:", err);
       messageApi.open({
         type: "error",
-        content: "Could not open calendar. Please try again.",
+        content: "Could not download calendar file. Please try again.",
       });
     } finally {
       setLoading(false);
     }
   };
-
-  //   const handleDownload = () => {
-  //     setLoading(true);
-  //     const icsContent = generateICS(event);
-  //     const blob = new Blob([icsContent], { type: "text/calendar" });
-  //     const url = URL.createObjectURL(blob);
-
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = "event.ics";
-  //     a.click();
-  //     URL.revokeObjectURL(url);
-  //     setLoading(false);
-  //   };
 
   return (
     <>
@@ -110,7 +88,7 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
         </div>
       ) : (
         <button
-          onClick={handleOpenCalendar}
+          onClick={handleDownload}
           className="flex flex-col items-center space-y-3 cursor-pointer"
         >
           <img
