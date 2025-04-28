@@ -1,6 +1,6 @@
 // add-event-to-calendar/src/components/AddToSamsungCalendar.tsx
 import React from "react";
-import { generateICS } from "../utils/ics";
+// import { generateICS } from "../utils/ics";
 import { EventDetails } from "./AddToGoogleCalendar";
 import { Spin } from "antd";
 
@@ -9,11 +9,11 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
 
   const handleOpenCalendar = () => {
     setLoading(true);
-    const icsContent = generateICS(event);
-    const dataUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(
-      icsContent
-    )}`;
-    window.open(dataUrl, "_blank");
+    // const icsContent = generateICS(event);
+    const deepLink = `content://com.android.calendar/time/${new Date(
+      event.startTime
+    ).getTime()}`;
+    window.open(deepLink, "_blank");
     setLoading(false);
   };
 
