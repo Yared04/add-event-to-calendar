@@ -4,6 +4,39 @@ import React from "react";
 import { EventDetails } from "./AddToGoogleCalendar";
 import { Spin, message } from "antd";
 
+// Tizen Calendar types
+interface TizenCalendar {
+  add(
+    event: CalendarEvent,
+    successCallback: (id: string) => void,
+    errorCallback: (error: Error) => void
+  ): void;
+}
+
+interface CalendarEvent {
+  description: string;
+  summary: string;
+  location: string;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  recurrence: null;
+}
+
+declare global {
+  interface Window {
+    tizen?: {
+      calendar: {
+        getDefaultCalendar(
+          type: string,
+          successCallback: (calendar: TizenCalendar) => void,
+          errorCallback: (error: Error) => void
+        ): void;
+      };
+    };
+  }
+}
+
 const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
   const [loading, setLoading] = React.useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -11,62 +44,42 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
   const handleOpenCalendar = () => {
     setLoading(true);
     try {
-      // Format dates for Samsung Calendar
+      // Format dates for Android Calendar
       const formatDate = (date: string) => {
         const d = new Date(date);
-        return d.toISOString().replace(/-|:|\.\d+/g, "");
+        return d.getTime();
       };
 
       const startTime = formatDate(event.startTime);
       const endTime = formatDate(event.endTime);
 
-      // Create a data URL for the calendar event
-      const calendarData = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "BEGIN:VEVENT",
-        `SUMMARY:${event.title}`,
-        `DTSTART:${startTime}`,
-        `DTEND:${endTime}`,
-        `LOCATION:${event.location}`,
-        "END:VEVENT",
-        "END:VCALENDAR",
-      ].join("\r\n");
-
-      // Create a blob with the calendar data
-      const blob = new Blob([calendarData], { type: "text/calendar" });
-      const url = URL.createObjectURL(blob);
-
-      // Try to open the calendar app using intent
-      const intentUrl = `intent://calendar/event?action=android.intent.action.EDIT&title=${encodeURIComponent(
+      // Create calendar event URL
+      const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
         event.title
-      )}&location=${encodeURIComponent(
+      )}&dates=${new Date(startTime)
+        .toISOString()
+        .replace(/-|:|\.\d+/g, "")}/${new Date(endTime)
+        .toISOString()
+        .replace(/-|:|\.\d+/g, "")}&location=${encodeURIComponent(
         event.location
-      )}&start=${startTime}&end=${endTime}#Intent;scheme=content;package=com.android.calendar;end`;
+      )}`;
 
-      // First try the intent URL
-      const opened = window.open(intentUrl, "_blank");
+      // Try to open the calendar app
+      const opened = window.open(calendarUrl, "_blank");
 
       if (!opened) {
-        // If intent fails, try the data URL
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "event.ics";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        throw new Error("Could not open calendar");
       }
 
       messageApi.open({
         type: "success",
-        content: "Opening Samsung Calendar...",
+        content: "Opening calendar...",
       });
     } catch (err) {
-      console.error("Error opening Samsung Calendar:", err);
+      console.error("Error opening calendar:", err);
       messageApi.open({
         type: "error",
-        content: "Could not open Samsung Calendar. Please try again.",
+        content: "Could not open calendar. Please try again.",
       });
     } finally {
       setLoading(false);
