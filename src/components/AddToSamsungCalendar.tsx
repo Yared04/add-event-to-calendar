@@ -7,19 +7,29 @@ import { Spin } from "antd";
 const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
   const [loading, setLoading] = React.useState(false);
 
-  const handleDownload = () => {
+  const handleOpenCalendar = () => {
     setLoading(true);
     const icsContent = generateICS(event);
-    const blob = new Blob([icsContent], { type: "text/calendar" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "event.ics";
-    a.click();
-    URL.revokeObjectURL(url);
+    const dataUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(
+      icsContent
+    )}`;
+    window.open(dataUrl, "_blank");
     setLoading(false);
   };
+
+  //   const handleDownload = () => {
+  //     setLoading(true);
+  //     const icsContent = generateICS(event);
+  //     const blob = new Blob([icsContent], { type: "text/calendar" });
+  //     const url = URL.createObjectURL(blob);
+
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = "event.ics";
+  //     a.click();
+  //     URL.revokeObjectURL(url);
+  //     setLoading(false);
+  //   };
 
   return (
     <>
@@ -36,7 +46,7 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
         </div>
       ) : (
         <button
-          onClick={handleDownload}
+          onClick={handleOpenCalendar}
           className="flex flex-col items-center space-y-3 cursor-pointer"
         >
           <img
