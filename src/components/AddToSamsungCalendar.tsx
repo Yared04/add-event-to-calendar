@@ -41,35 +41,51 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
   const [loading, setLoading] = React.useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
+  const convertToISO = (dateStr: string) => {
+    try {
+      console.log("Received date string:", dateStr); // Debug log
+
+      // If the date string is already in ISO format, return it
+      if (dateStr.includes("T") && dateStr.includes("Z")) {
+        return dateStr;
+      }
+
+      // Handle moment.js formatted dates (e.g., "2024-03-24T21:00:00+00:00")
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        console.log("Invalid date object:", date); // Debug log
+        throw new Error("Invalid date format");
+      }
+      return date.toISOString();
+    } catch (error) {
+      console.error("Error converting date:", error);
+      throw new Error("Invalid date format");
+    }
+  };
+
   const handleOpenCalendar = () => {
     setLoading(true);
     try {
-      // Format dates for Android Calendar
-      const formatDate = (date: string) => {
-        const d = new Date(date);
-        return d.getTime();
-      };
+      console.log("Event data:", event); // Debug log
+      const startTime = convertToISO(event.startTime);
+      const endTime = convertToISO(event.endTime);
 
-      const startTime = formatDate(event.startTime);
-      const endTime = formatDate(event.endTime);
+      // Format date for Google Calendar URL (YYYYMMDDTHHmmssZ)
+      const formatDateForUrl = (isoString: string) => {
+        return isoString
+          .replace(/-/g, "")
+          .replace(/:/g, "")
+          .replace(/\.\d+Z$/, "Z");
+      };
 
       // Create calendar event URL
       const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
         event.title
-      )}&dates=${new Date(startTime)
-        .toISOString()
-        .replace(/-|:|\.\d+/g, "")}/${new Date(endTime)
-        .toISOString()
-        .replace(/-|:|\.\d+/g, "")}&location=${encodeURIComponent(
-        event.location
-      )}`;
+      )}&dates=${formatDateForUrl(startTime)}/${formatDateForUrl(
+        endTime
+      )}&location=${encodeURIComponent(event.location)}`;
 
-      // Try to open the calendar app
-      const opened = window.open(calendarUrl, "_blank");
-
-      if (!opened) {
-        throw new Error("Could not open calendar");
-      }
+      window.open(calendarUrl, "_blank");
 
       messageApi.open({
         type: "success",
@@ -79,7 +95,8 @@ const AddToSamsungCalendar: React.FC<{ event: EventDetails }> = ({ event }) => {
       console.error("Error opening calendar:", err);
       messageApi.open({
         type: "error",
-        content: "Could not open calendar. Please try again.",
+        content:
+          "Could not open calendar. Please check the event dates and try again.",
       });
     } finally {
       setLoading(false);
