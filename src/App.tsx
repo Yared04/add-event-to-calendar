@@ -3,7 +3,7 @@ import AddToGoogleCalendar, {
   EventDetails,
 } from "./components/AddToGoogleCalendar";
 import AddToSamsungCalendar from "./components/AddToSamsungCalendar";
-
+import AddToAppleCalendar from "./components/AddToAppleCalendar";
 import { useSearchParams } from "react-router-dom";
 
 const App: React.FC = () => {
@@ -26,9 +26,10 @@ const App: React.FC = () => {
   return (
     <div className="mx-auto flex max-w-lg flex-col justify-center items-center space-y-4 p-4 min-h-svh">
       <p className="text-lg">Add event to:</p>
-      <div className="flex space-x-8">
+      <div className="flex flex-wrap justify-center gap-8">
         <AddToGoogleCalendar event={event} />
         <AddToSamsungCalendar event={event} />
+        <AddToAppleCalendar event={event} />
       </div>
     </div>
   );
