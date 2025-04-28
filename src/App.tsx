@@ -1,5 +1,9 @@
 import React from "react";
-import AddToGoogleCalendar, { EventDetails } from "./components/AddToGoogleCalendar";
+import AddToGoogleCalendar, {
+  EventDetails,
+} from "./components/AddToGoogleCalendar";
+import AddToSamsungCalendar from "./components/AddToSamsungCalendar";
+
 import { useSearchParams } from "react-router-dom";
 
 const App: React.FC = () => {
@@ -24,6 +28,7 @@ const App: React.FC = () => {
       <p className="text-lg">Add event to:</p>
       <div className="flex space-x-2">
         <AddToGoogleCalendar event={event} />
+        <AddToSamsungCalendar event={event} />
       </div>
     </div>
   );
